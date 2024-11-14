@@ -11,7 +11,7 @@ private EnrichmentType enrichmentType;
     }
 }
 ```
-`DTO` содержит сообщение content и тип обогащения `enrichmentType`.
+`DTO` содержит сообщение `content` и тип обогащения `enrichmentType`.
 
 `MSISDN` - это обогащение по номеру телефона. В качестве результата обогащения добавляются `firstName` и `lastName` в поле `enrichment`.
 
@@ -93,3 +93,6 @@ private final MessageValidator validator;
 Не пытайтесь решить проблему с "наскока". Разбейте систему на компоненты, протестируйте каждый из них отдельно, а потом совместите по кусочкам.
 Для валидации JSON можно использовать библиотеку [JSONAssert](https://www.baeldung.com/jsonassert).
 Полученные результаты оформите в Pull Request и отправьте на ревью ментору.
+
+### Info
+![cd.png](local/images/cd.png)

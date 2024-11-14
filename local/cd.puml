@@ -1,0 +1,31 @@
+@startuml
+    header "ANDROID. Profile"
+
+    package org.teta {
+
+        package exceptions {
+
+            class MsisdnNotFoundException {}
+
+            class InvalidFormatOfMessageException {}
+
+            class InformationForEnrichmentNotFoundException {}
+
+        }
+
+        package models {
+
+            class Message {}
+
+        }
+
+        package services {
+
+            class EnrichmentService {}
+
+        }
+
+        class MessageValidator {}
+
+    }
+@enduml
