@@ -9,11 +9,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Message {
-    private String action;
-    private String page;
-    @NotBlank(message = "msisdn must not be null and must contain at least one non-whitespace character")
-    private String msisdn;
+    private String content;
     private EnrichmentType enrichmentType;
+
     public enum EnrichmentType {
         MSISDN
     }

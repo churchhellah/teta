@@ -1,38 +1,51 @@
 package org.teta;
 
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
+import org.junit.jupiter.api.Test;
+import org.teta.dto.Message;
+import org.teta.services.EnrichmentService;
 
-/**
- * Unit test for simple App.
- */
-public class EnrichmentServiceTest
-    extends TestCase
-{
-    /**
-     * Create the test case
-     *
-     * @param testName name of the test case
-     */
-    public EnrichmentServiceTest(String testName )
-    {
-        super( testName );
-    }
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-    /**
-     * @return the suite of tests being tested
-     */
-    public static Test suite()
-    {
-        return new TestSuite( EnrichmentServiceTest.class );
-    }
+import static org.junit.jupiter.api.Assertions.*;
 
-    /**
-     * Rigourous Test :-)
-     */
-    public void testApp()
-    {
-        assertTrue( true );
+class EnrichmentServiceTest {
+
+    @Test
+    void testMultithreadedEnrichment() throws InterruptedException {
+        MessageValidator validator = new MessageValidatorImpl();
+        EnrichmentProvider provider = new MsisdnEnrichmentProvider();
+        EnrichmentService service = new EnrichmentService(validator, provider);
+
+        ExecutorService executor = Executors.newFixedThreadPool(10);
+        CountDownLatch latch = new CountDownLatch(10);
+
+        for (int i = 0; i < 10; i++) {
+            executor.submit(() -> {
+                try {
+                    Message message = new Message();
+                    message.setContent("""
+                        {
+                            "action": "button_click",
+                            "page": "book_card",
+                            "msisdn": "88005553535"
+                        }
+                    """);
+                    message.setEnrichmentType(Message.EnrichmentType.MSISDN);
+
+                    String result = service.enrich(message);
+                    assertTrue(result.contains("Vasya"));
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        latch.await();
+        executor.shutdown();
+
+        assertEquals(10, service.getEnrichedMessages().size());
+        assertEquals(0, service.getFailedMessages().size());
     }
 }
