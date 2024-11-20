@@ -1,9 +1,10 @@
 package org.teta.services;
 
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import lombok.var;
+//import lombok.var;
 import org.teta.EnrichmentProvider;
 import org.teta.MessageValidator;
 import org.teta.dto.Message;
@@ -32,7 +33,7 @@ public class EnrichmentService {
         }
 
         try {
-            var jsonNode = objectMapper.readTree(content);
+            JsonNode jsonNode = objectMapper.readTree(content);
             String msisdn = jsonNode.get("msisdn").asText();
             var enrichment = enrichmentProvider.enrich(msisdn);
 
