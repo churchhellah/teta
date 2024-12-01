@@ -3,6 +3,9 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvFileSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.teta.dto.Message;
 import org.teta.dto.UserInfo;
@@ -18,6 +21,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import static junit.framework.Assert.assertEquals;
 
@@ -25,13 +29,12 @@ import static junit.framework.Assert.assertEquals;
 @Slf4j
 public class EndToEndTest {
 
-    // Объявляются переменные для хранения экземпляров репозитория, валидатора, обогатителя и сервиса
     private InMemoryUserRepository userRepository;
     private MessageValidator messageValidator;
     private MessageEnricher enricher;
     private EnrichmentService enrichmentService;
+    private boolean terminated;
 
-    // Метод выполняется перед каждым тестом для настройки окружения
     @BeforeEach
     public void setUp() {
         // Создаются экземпляры репозитория, валидатора, обогатителя и сервиса
@@ -48,20 +51,16 @@ public class EndToEndTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {
-            "{\"action\":\"button_click\",\"page\":\"book_card\",\"msisdn\":\"88005553535\"}",
-            "{\"msisdn\":\"88005553536\"}",
-            "{\"msisdn\":\"88005553537\"}",
-            "{\"msisdn\":\"88005553538\"}"
-    })
-    public void testConcurrentEnrichment(String messageContent) throws InterruptedException {
-        // Создание пула потоков для параллельного выполнения задач
-        ExecutorService executorService = Executors.newFixedThreadPool(10);
+    @MethodSource("provideTestData")
+    public void testConcurrentEnrichment(String messageContent, int threadCount, int taskCount) throws InterruptedException {
+        // Создание пула потоков - максимум потоков в пуле получаем из входных параметров
+        ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
         // Создание синхронизатора для ожидания завершения всех задач
-        CountDownLatch latch = new CountDownLatch(10);
+        // максимум задач в потоке берем из входных параметров
+        CountDownLatch latch = new CountDownLatch(taskCount);
 
         // Цикл для создания и отправки 10 задач на выполнение
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < taskCount; i++) {
             executorService.submit(() -> {
                 // Каждая задача создает объект сообщения,
                 // устанавливает его содержимое и тип обогащения,
@@ -72,15 +71,19 @@ public class EndToEndTest {
                     message.setEnrichmentType(Message.EnrichmentType.MSISDN);
 
                     String result = enrichmentService.enrich(message);
-                    System.out.println("Input: " + messageContent);
-                    System.out.println("Output: " + result);
 
-//                    switch (messageContent) {
-//                        case ("{\"action\":\"button_click\",\"page\":\"book_card\",\"msisdn\":\"88005553535\"}"):
-//                            Assertions.assertEquals();
-//                    }
-
-                    Assertions.assertEquals("{\"action\":\"button_click\",\"page\":\"book_card\",\"msisdn\":\"88005553535\",\"enrichment\":{\"firstName\":\"Vasya\",\"lastName\":\"Ivanov\"}}", result);
+                    if (messageContent.equals("{\"action\":\"button_click\",\"page\":\"book_card\",\"msisdn\":\"88005553535\"}")) {
+                        Assertions.assertEquals("{\"action\":\"button_click\",\"page\":\"book_card\",\"msisdn\":\"88005553535\",\"enrichment\":{\"firstName\":\"Vasya\",\"lastName\":\"Ivanov\"}}", result);
+                    } else if (messageContent.equals("{\"msisdn\":\"88005553536\"}")) {
+                        Assertions.assertEquals("{\"msisdn\":\"88005553536\",\"enrichment\":{\"firstName\":\"Lucya\",\"lastName\":\"Chebotina\"}}", result);
+                    } else if (messageContent.equals("{\"msisdn\":\"88005553537\"}")) {
+                        Assertions.assertEquals("{\"msisdn\":\"88005553537\",\"enrichment\":{\"firstName\":\"Egor\",\"lastName\":\"Kreed\"}}", result);
+                    } else if (messageContent.equals("{\"msisdn\":\"88005553538\"}")) {
+                        Assertions.assertEquals("{\"msisdn\":\"88005553538\",\"enrichment\":{\"firstName\":\"Guf\",\"lastName\":\"Dead\"}}", result);
+                    }
+                } catch (Exception e) {
+                    log.error("Error occurred: {}", e);
+                    Assertions.fail("Error during execution: " + e.getMessage());
                 }
                 finally {
                     // После завершения каждой задачи уменьшается счетчик синхронизатора
@@ -94,5 +97,17 @@ public class EndToEndTest {
         executorService.shutdown();
         // Ожидание завершения всех задач в пуле потоков
         executorService.awaitTermination(10, TimeUnit.SECONDS);
+
+        terminated = executorService.awaitTermination(10, TimeUnit.SECONDS);
+        Assertions.assertTrue(terminated, "Not all threads finished in time!");
+    }
+
+    private static Stream<Arguments> provideTestData() {
+        return Stream.of(
+                Arguments.of("{\"action\":\"button_click\",\"page\":\"book_card\",\"msisdn\":\"88005553535\"}", 10, 10),
+                Arguments.of("{\"msisdn\":\"88005553536\"}", 5, 5),
+                Arguments.of("{\"msisdn\":\"88005553537\"}", 15, 15),
+                Arguments.of("{\"msisdn\":\"88005553538\"}", 20, 20)
+        );
     }
 }
