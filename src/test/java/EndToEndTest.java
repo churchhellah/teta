@@ -1,18 +1,14 @@
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.CsvFileSource;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.teta.dto.Message;
 import org.teta.dto.UserInfo;
 import org.teta.service.EnrichmentService;
 import org.teta.service.MessageEnricher;
 import org.teta.service.MessageValidator;
-import org.teta.service.UserRepository;
 import org.teta.service.impl.InMemoryUserRepository;
 import org.teta.service.impl.MSISDNEnricher;
 import org.teta.service.impl.MessageValidatorImpl;
@@ -22,8 +18,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
-
-import static junit.framework.Assert.assertEquals;
 
 // End-to-End тест для проверки работы системы в многопоточной среде
 @Slf4j
