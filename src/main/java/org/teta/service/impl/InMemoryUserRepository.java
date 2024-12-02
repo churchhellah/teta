@@ -16,8 +16,4 @@ public class InMemoryUserRepository implements UserRepository {
     public void addUserInfo(String msisdn, UserInfo userInfo) {
         userMap.put(msisdn, userInfo);
     }
-
-    public void removeUserInfo(String msisdn) {
-        userMap.remove(msisdn);
-    }
 }
