@@ -3,29 +3,68 @@
 
     package org.teta {
 
-        package exceptions {
-
-            class MsisdnNotFoundException {}
-
-            class InvalidFormatOfMessageException {}
-
-            class InformationForEnrichmentNotFoundException {}
-
+        package dto {
+            class EnrichedMessage {
+                -action
+                -page
+                -msisdn
+                -enrichment
+            }
+            class Enrichment {
+                -firstName
+                -lastName
+            }
+            class Message {
+                -content
+                -EnrichmentType
+            }
+            enum EnrichmentType {
+                +MSISDN
+            }
+            class UserInfo {
+                -firstName
+                -lastName
+            }
         }
 
-        package models {
-
-            class Message {}
-
+        package service {
+            package impl {
+                class InMemoryUserRepository {
+                    getUserInfo(String msisdn)
+                    addUserInfo(String msisdn, UserInfo userInfo)
+                }
+                class MessageValidatorImpl {
+                    isValidJson(String json)
+                    isContainsMsisdn(String json)
+                }
+                class MSISDNEnricher {
+                    enrich(String content)
+                }
+            }
+            interface MessageEnricher {
+                enrich()
+            }
+            interface MessageValidator {
+                isValidJson()
+                isContainsMsisdn()
+            }
+            interface UserRepository {
+                getUserInfo()
+            }
+            class EnrichmentService {
+                enrich(Message message)
+            }
         }
 
-        package services {
-
-            class EnrichmentService {}
-
-        }
-
-        class MessageValidator {}
-
+        EnrichedMessage --> Enrichment
+        Message --> EnrichmentType
+        InMemoryUserRepository ..|> UserRepository
+        MessageValidatorImpl ..|> MessageValidator
+        MSISDNEnricher ..|> MessageEnricher
+        InMemoryUserRepository --> UserInfo
+        MSISDNEnricher --o UserRepository
+        EnrichmentService --o MessageValidator
+        EnrichmentService --o MessageEnricher
+        EnrichmentService --> Message
     }
 @enduml
